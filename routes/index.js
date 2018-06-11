@@ -4,7 +4,7 @@
 const router = require('koa-router')();
 const controllers = require('../controllers')
 
-router.get('/demo', controllers.demo)
+router.get('/findNearestOne', controllers.findNearestOne)
 
 router.get('/statusDetail', controllers.statusDetail)
 

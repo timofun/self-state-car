@@ -1,0 +1,39 @@
+weight:体重
+
+weight_condition: 
+
+	Severe obesity:严重肥胖（需加强锻炼）
+	Moderate obesity:中度肥胖（需加强锻炼）
+	Mild obesity:轻度肥胖（需加强锻炼）
+	overweight:偏重（需加强锻炼）
+	Normal weight:正常体重
+	underweight:体重偏低
+
+
+rate:心率
+
+rate_condition:
+
+	normal:心率正常
+	unnormal:心率不正常（请注意休息）
+
+blood：血氧
+
+blood_condition:
+
+	normal:血氧含量正常
+	unnormal:血氧不正常（您有点缺氧）
+
+
+driver_condition:
+
+	safe_driving:安全驾驶状态
+	texting_right:右手发短信（注意安全）
+	texting_left :左手发短信（注意安全）
+	talking_on_phone_right:右手打电话（注意安全）
+	talking_on_phone_left :左手打电话（注意安全）
+	operating_radio:操作车载电台（注意安全）
+	drinking:喝水（注意安全）
+	reaching_behind:转向后座（注意安全）
+	doing_hair_makeup:整理着装（注意安全）
+	talking_to_passanger:与乘客讲话（注意安全）
