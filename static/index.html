@@ -50,23 +50,22 @@
             display: inline-block;
             margin-bottom: 3px;
             font-size: 14px;
-            color: #ffffff;
+            color: #000000;
         }
 
         .left-container {
-            background: #f98c58
+            background: #e0d8cc
         }
 
         .right-container {
-            background: #3e8214
+            background: #e0d8cc
         }
     </style>
 </head>
 
 <body>
-    <div class='title'>
-        您的驾驶状态：
-        <span style="color: green;">正常驾驶</span>
+    <div class='title' id="driver_state">
+        
     </div>
     <div id="container" style="height: 440px;"></div>
     <div class="thisStatus">您的当前状态：</div>
@@ -99,7 +98,25 @@
                 myChart.showLoading();
                 $.ajax({
                     type: "GET",
-                    url: "http://localhost:5757/statusDetail",
+                    url: "http://47.98.118.150:5757/queryDriverState",
+                    data: {},
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        var arr = data.data.driverState
+                        var driver = driverSwitch(arr[0].driver_condition)
+                        var driverColor = driverSwitchColor(arr[0].driver_condition)
+                        var html = `
+                            您的驾驶状态：
+                            <span style="color: ${driverColor}">${driver}</span>
+                        `
+                        $('#driver_state').empty();
+                        $('#driver_state').append(html);
+                    }
+                })
+                $.ajax({
+                    type: "GET",
+                    url: "http://47.98.118.150:5757/statusDetail",
                     data: {},
                     dataType: "json",
                     async: false,
@@ -113,12 +130,11 @@
                                 1) + '-' + newdate.getDate()
                             timeList.unshift(date)
                         });
-                        console.log(person, rateList, bloodList, timeList)
                     }
                 })
                 $.ajax({
                     type: "GET",
-                    url: "http://localhost:5757/findNearestOne",
+                    url: "http://47.98.118.150:5757/findNearestOne",
                     data: {},
                     dataType: "json",
                     async: false,
@@ -126,9 +142,11 @@
                         var arr = data.data.nearestOne
                         var person = arr[0]
                         var weightStatus = weightSwitch(person.weight_condition)
+                        var weightStatusColor = weightSwitchColor(person.weight_condition)
                         var rateStatus = rateSwitch(person.rate_condition)
+                        var rateStatusColor = rateSwitchColor(person.rate_condition)
                         var bloodStatus = bloodSwitch(person.blood_condition)
-                        console.log(person)
+                        var bloodStatusColor = bloodSwitchColor(person.blood_condition)
                         var html =
                             `
                             <div class="left-container">
@@ -144,13 +162,13 @@
                             </div>
                             <div class="right-container">
                                 <span>
-                                    体重：<span>${person.weight}kg（${weightStatus}）</span>
+                                    体重：<span style="color: ${weightStatusColor}">${person.weight}kg（${weightStatus}）</span>
                                 </span>
                                 <span>
-                                    心率：<span>${person.rate}bpm（${rateStatus}）</span>
+                                    心率：<span style="color: ${rateStatusColor}">${person.rate}bpm（${rateStatus}）</span>
                                 </span>
                                 <span>
-                                    血氧浓度：<span>${person.blood}%（${bloodStatus}）</span>
+                                    血氧浓度：<span style="color: ${bloodStatusColor}">${person.blood}%（${bloodStatus}）</span>
                                 </span>
                             </div>
                         `
@@ -275,6 +293,31 @@
                 }
             }
 
+            function weightSwitchColor(params) {
+                switch (params) {
+                    case 'Severe_obesity':
+                        return '#920101'
+                        break;
+                    case 'Moderate_obesity':
+                        return '#d00404'
+                        break;
+                    case 'Mild_obesity':
+                        return '#ec5151'
+                        break;
+                    case 'overweight':
+                        return '#e6a23c'
+                        break;
+                    case 'Normal_weight':
+                        return 'green'
+                        break;
+                    case 'underweight':
+                        return '#eac68f'
+                        break;
+                    default:
+                        break;
+                }
+            }
+
             // 心率状态
             function rateSwitch(params) {
                 switch (params) {
@@ -289,6 +332,19 @@
                 }
             }
 
+            function rateSwitchColor(params) {
+                switch (params) {
+                    case 'normal':
+                        return 'green'
+                        break;
+                    case 'unnormal':
+                        return '#eac68f'
+                        break;
+                    default:
+                        break;
+                }
+            }
+
             // 血氧状态
             function bloodSwitch(params) {
                 switch (params) {
@@ -297,6 +353,19 @@
                         break;
                     case 'unnormal':
                         return '血氧不正常（您有点缺氧）'
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            function bloodSwitchColor(params) {
+                switch (params) {
+                    case 'normal':
+                        return 'green'
+                        break;
+                    case 'unnormal':
+                        return '#eac68f'
                         break;
                     default:
                         break;
@@ -335,6 +404,43 @@
                         break;
                     case 'talking_to_passanger':
                         return '与乘客讲话（注意安全）'
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            function driverSwitchColor(params) {
+                switch (params) {
+                    case 'safe_driving':
+                        return 'green'
+                        break;
+                    case 'texting_right':
+                        return 'red'
+                        break;
+                    case 'texting_left':
+                        return 'red'
+                        break;
+                    case 'talking_on_phone_right':
+                        return 'red'
+                        break;
+                    case 'talking_on_phone_left':
+                        return 'red'
+                        break;
+                    case 'operating_radio':
+                        return 'red'
+                        break;
+                    case 'drinking':
+                        return 'red'
+                        break;
+                    case 'reaching_behind':
+                        return 'red'
+                        break;
+                    case 'doing_hair_makeup':
+                        return 'red'
+                        break;
+                    case 'talking_to_passanger':
+                        return 'red'
                         break;
                     default:
                         break;

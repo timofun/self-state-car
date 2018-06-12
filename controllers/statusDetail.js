@@ -4,7 +4,6 @@ module.exports = async (ctx) => {
   let statusList;
   await userModel.findAllPost()
     .then(result => {
-      console.log('11111', result)
       statusList = result
     }).catch(e => {
       console.log(e)
