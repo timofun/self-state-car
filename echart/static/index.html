@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 1024px;
+            height: 600px;
+            padding: 10px 20px;
+            margin: 0 auto;
+            box-sizing: border-box;
+            border: 1px solid #dedede;
+            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .12), 0 0 6px 0 rgba(0, 0, 0, .04);
+            font-family: "SF Pro Display", Roboto, Noto, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+
+        .title {
+            width: 1000px;
+            height: 20px;
+            margin-bottom: 20px;
+            display: inline-block;
+            text-align: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #000000;
+        }
+
+        .thisStatus {
+            font-weight: 700;
+            font-size: 14px;
+            color: #999;
+        }
+
+        .desc-container {
+            display: flex;
+        }
+
+        .left-container,
+        .right-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px;
+        }
+
+        .left-container>span,
+        .right-container>span {
+            display: inline-block;
+            margin-bottom: 3px;
+            font-size: 14px;
+            color: #000000;
+        }
+
+        .left-container {
+            background: #dedede
+        }
+
+        .right-container {
+            background: #dedede
+        }
+    </style>
+</head>
+
+<body>
+    <div class='title' id="driver_state">
+        
+    </div>
+    <div id="container" style="height: 440px;"></div>
+    <div class="thisStatus">您的当前状态：</div>
+    <div class="desc-container">
+
+    </div>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/echarts.min.js"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts-gl/echarts-gl.min.js"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts-stat/ecStat.min.js"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/extension/dataTool.min.js"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/china.js"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/world.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=ZUONbpqGBsYGXNIYHicvbAbM"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/extension/bmap.min.js"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/simplex.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            var dom = document.getElementById("container");
+            var myChart = echarts.init(dom);
+            getStatus();
+            var self = setInterval(getStatus, 5000);
+
+            function getStatus(params) {
+                var person = {}
+                var statusList = []
+                var rateList = []
+                var bloodList = []
+                var timeList = []
+                myChart.showLoading();
+                $.ajax({
+                    type: "GET",
+                    url: "http://47.106.154.182:5757/queryDriverState",
+                    data: {},
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        var arr = data.data.driverState
+                        var driver = driverSwitch(arr[0].driver_condition)
+                        var driverColor = driverSwitchColor(arr[0].driver_condition)
+                        var html = `
+                            您的驾驶状态：
+                            <span style="color: ${driverColor}">${driver}</span>
+                        `
+                        $('#driver_state').empty();
+                        $('#driver_state').append(html);
+                    }
+                })
+                $.ajax({
+                    type: "GET",
+                    url: "http://47.106.154.182:5757/statusDetail",
+                    data: {},
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        var arr = data.data.statusList
+                        arr.forEach(function (item) {
+                            rateList.push(item.rate)
+                            bloodList.push(item.blood)
+                            var newdate = new Date(item.time)
+                            var date = newdate.getFullYear() + '-' + (newdate.getMonth() +
+                                1) + '-' + newdate.getDate()
+                            timeList.unshift(date)
+                        });
+                    }
+                })
+                $.ajax({
+                    type: "GET",
+                    url: "http://47.106.154.182:5757/findNearestOne",
+                    data: {},
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        var arr = data.data.nearestOne
+                        var person = arr[0]
+                        var weightStatus = weightSwitch(person.weight_condition)
+                        var weightStatusColor = weightSwitchColor(person.weight_condition)
+                        var rateStatus = rateSwitch(person.rate_condition)
+                        var rateStatusColor = rateSwitchColor(person.rate_condition)
+                        var bloodStatus = bloodSwitch(person.blood_condition)
+                        var bloodStatusColor = bloodSwitchColor(person.blood_condition)
+                        var html =
+                            `
+                            <div class="left-container">
+                                <span>
+                                    性别：<span>男</span>
+                                </span>
+                                <span>
+                                    年龄：<span>${person.age}岁</span>
+                                </span>
+                                <span>
+                                    身高：<span>${person.height}cm</span>
+                                </span>
+                            </div>
+                            <div class="right-container">
+                                <span>
+                                    体重：<span style="color: ${weightStatusColor}">${person.weight}kg（${weightStatus}）</span>
+                                </span>
+                                <span>
+                                    心率：<span style="color: ${rateStatusColor}">${person.rate}bpm（${rateStatus}）</span>
+                                </span>
+                                <span>
+                                    血氧浓度：<span style="color: ${bloodStatusColor}">${person.blood}%（${bloodStatus}）</span>
+                                </span>
+                            </div>
+                        `
+                        $('.desc-container').empty()
+                        $('.desc-container').append(html)
+                    }
+                })
+                myChart.hideLoading();
+                var app = {};
+                option = null;
+                option = {
+                    title: {
+                        text: '您的最近7天身体状态',
+                        subtext: '',
+                        textStyle: {
+                            fontSize: 14,
+                            color: '#999'
+                        }
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    legend: {
+                        data: ['心率', '血氧浓度']
+                    },
+                    toolbox: {
+                        show: false,
+                        feature: {
+                            dataZoom: {
+                                yAxisIndex: 'none'
+                            },
+                            dataView: {
+                                readOnly: false
+                            },
+                            magicType: {
+                                type: ['line', 'bar']
+                            },
+                            restore: {},
+                            saveAsImage: {}
+                        }
+                    },
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: timeList
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLabel: {
+                            formatter: '{value}'
+                        }
+                    },
+                    series: [{
+                        name: '心率',
+                        type: 'line',
+                        data: rateList,
+                        markPoint: {
+                            data: [{
+                                type: 'max',
+                                name: '最大值'
+                            }, {
+                                type: 'min',
+                                name: '最小值'
+                            }]
+                        },
+                        markLine: {
+                            data: [{
+                                type: 'average',
+                                name: '平均值'
+                            }]
+                        }
+                    }, {
+                        name: '血氧浓度',
+                        type: 'line',
+                        data: bloodList,
+                        markPoint: {
+                            data: [{
+                                type: 'max',
+                                name: '最大值'
+                            }, {
+                                type: 'min',
+                                name: '最小值'
+                            }]
+                        },
+                        markLine: {
+                            data: [{
+                                type: 'average',
+                                name: '平均值'
+                            }]
+                        }
+                    }]
+                };
+                if (option && typeof option === "object") {
+                    myChart.setOption(option,
+                        true);
+                }
+            };
+
+            // 体重状态
+            function weightSwitch(params) {
+                switch (params) {
+                    case 'Severe_obesity':
+                        return '严重肥胖（需加强锻炼）'
+                        break;
+                    case 'Moderate_obesity':
+                        return '中度肥胖（需加强锻炼）'
+                        break;
+                    case 'Mild_obesity':
+                        return '轻度肥胖（需加强锻炼）'
+                        break;
+                    case 'overweight':
+                        return '偏重（需加强锻炼）'
+                        break;
+                    case 'Normal_weight':
+                        return '正常体重'
+                        break;
+                    case 'underweight':
+                        return '体重偏低'
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            function weightSwitchColor(params) {
+                switch (params) {
+                    case 'Severe_obesity':
+                        return 'red'
+                        break;
+                    case 'Moderate_obesity':
+                        return '#fd9900'
+                        break;
+                    case 'Mild_obesity':
+                        return '#fd9900'
+                        break;
+                    case 'overweight':
+                        return '#fd9900'
+                        break;
+                    case 'Normal_weight':
+                        return 'green'
+                        break;
+                    case 'underweight':
+                        return '#fd9900'
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            // 心率状态
+            function rateSwitch(params) {
+                switch (params) {
+                    case 'normal':
+                        return '心率正常'
+                        break;
+                    case 'unnormal':
+                        return '心率不正常（请注意休息）'
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            function rateSwitchColor(params) {
+                switch (params) {
+                    case 'normal':
+                        return 'green'
+                        break;
+                    case 'unnormal':
+                        return '#fd9900'
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            // 血氧状态
+            function bloodSwitch(params) {
+                switch (params) {
+                    case 'normal':
+                        return '血氧含量正常'
+                        break;
+                    case 'unnormal':
+                        return '血氧不正常（您有点缺氧）'
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            function bloodSwitchColor(params) {
+                switch (params) {
+                    case 'normal':
+                        return 'green'
+                        break;
+                    case 'unnormal':
+                        return '#fd9900'
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            // 驾驶状态
+            function driverSwitch(params) {
+                switch (params) {
+                    case 'safe_driving':
+                        return '安全驾驶状态'
+                        break;
+                    case 'texting_right':
+                        return '右手发短信（注意安全）'
+                        break;
+                    case 'texting_left':
+                        return '左手发短信（注意安全）'
+                        break;
+                    case 'talking_on_phone_right':
+                        return '右手打电话（注意安全）'
+                        break;
+                    case 'talking_on_phone_left':
+                        return '左手打电话（注意安全）'
+                        break;
+                    case 'operating_radio':
+                        return '操作车载电台（注意安全）'
+                        break;
+                    case 'drinking':
+                        return '喝水（注意安全）'
+                        break;
+                    case 'reaching_behind':
+                        return '转向后座（注意安全）'
+                        break;
+                    case 'doing_hair_makeup':
+                        return '整理着装（注意安全）'
+                        break;
+                    case 'talking_to_passanger':
+                        return '与乘客讲话（注意安全）'
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            function driverSwitchColor(params) {
+                switch (params) {
+                    case 'safe_driving':
+                        return 'green'
+                        break;
+                    case 'texting_right':
+                        return 'red'
+                        break;
+                    case 'texting_left':
+                        return 'red'
+                        break;
+                    case 'talking_on_phone_right':
+                        return 'red'
+                        break;
+                    case 'talking_on_phone_left':
+                        return 'red'
+                        break;
+                    case 'operating_radio':
+                        return 'red'
+                        break;
+                    case 'drinking':
+                        return 'red'
+                        break;
+                    case 'reaching_behind':
+                        return 'red'
+                        break;
+                    case 'doing_hair_makeup':
+                        return 'red'
+                        break;
+                    case 'talking_to_passanger':
+                        return 'red'
+                        break;
+                    default:
+                        break;
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>
