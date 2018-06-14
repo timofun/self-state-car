@@ -32,7 +32,7 @@ let query = (sql, values) => {
 // //连接不再使用，返回到连接池   }); }); } 查询最近一条数据
 exports.queryDriverState = () => {
   let _sql = `
-      select * from driver_condition ORDER BY driver_condition desc LIMIT 1
+      select * from driver_condition ORDER BY id desc LIMIT 1
     `
   return query(_sql)
 }
@@ -40,7 +40,7 @@ exports.queryDriverState = () => {
 // 查询最近一条数据
 exports.findNearestOne = () => {
   let _sql = `
-      select * from user_databases ORDER BY time DESC LIMIT 1
+      select * from user_databases ORDER BY id DESC LIMIT 1
     `
   return query(_sql)
 }
