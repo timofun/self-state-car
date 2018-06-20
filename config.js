@@ -1,6 +1,6 @@
 
 const CONF = {
-  port: 5757,
+  port: 80,
 
   mysql: {
     host: 'localhost',
